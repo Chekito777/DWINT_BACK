@@ -1,16 +1,7 @@
-[build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
-
 [[services]]
-name = "ms-a"
-source = "ms-a/Dockerfile"
-env = "PORT=8081"
-
-[[services]]
-name = "ms-b"
-source = "ms_b/Dockerfile"
-env = "PORT=8082"
+name = "msa-msb"
+source = "msa-msb/Dockerfile"
+env = "PORT=8081,8082"
 
 [[services]]
 name = "auth"

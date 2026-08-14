@@ -1,1 +1,13 @@
-{"build":{"builder":"DOCKERFILE","dockerfilePath":"Dockerfile"},"deploy":{"startCommand":"java -jar /app/app.jar","healthcheckPath":"/","healthcheckTimeout":30,"restartPolicyType":"ON_FAILURE"}}
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile"
+  },
+  "deploy": {
+    "startCommand": "",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE"
+  }
+}

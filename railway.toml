@@ -1,0 +1,28 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[[services]]
+name = "ms-a"
+source = "ms-a/Dockerfile"
+env = "PORT=8081"
+
+[[services]]
+name = "ms-b"
+source = "ms_b/Dockerfile"
+env = "PORT=8082"
+
+[[services]]
+name = "auth"
+source = "authserver/Dockerfile"
+env = "PORT=8083"
+
+[[services]]
+name = "gateway"
+source = "api-gateway/Dockerfile"
+env = "PORT=8080"
+
+[[services]]
+name = "eureka"
+source = "idgs15/Dockerfile"
+env = "PORT=8761"

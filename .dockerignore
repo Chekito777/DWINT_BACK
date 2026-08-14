@@ -12,6 +12,3 @@
 # Local config
 *.env
 .env.*
-
-# Maven wrapper (optional if using image)
-.mvn/

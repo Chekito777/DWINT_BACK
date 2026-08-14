@@ -79,8 +79,9 @@ EUREKA_CLIENT_FETCH_REGISTRY=false
 1. Ve a [railway.app](https://railway.app/) y crea un nuevo proyecto (`New Project`).
 2. Selecciona `Deploy from GitHub repo` o `Empty Service`.
 3. Subí el repo completo (`DWINT/back`) a Railway (`Deploy from GitHub repo`) como **un solo servicio**.
-   - Railway detectará `Dockerfile` en la raíz (`C:\DWINT\back\Dockerfile`).
-   - No configures `Root Directory`; el `Dockerfile` usa `docker-compose` para levantar todo (`ms-a`, `ms-b`, `ms_b`, `api-gateway`, `idgs15`, bases).
+   - Railway detectará `Dockerfile` en la raíz.
+   - El `Dockerfile` compila todos los microservicios y usa `supervisord` para correr Eureka (8761), Auth (8083), ms-a (8081), ms-b (8082), Gateway (8080) en un solo contenedor.
+   - No configures `Root Directory`.
 4. Base de datos (una sola instancia):
    - Crea un servicio `Database` (`PostgreSQL`).
    - Una vez creada, conectate con `psql` o con la interfaz de Railway y creá las 3 bases:
@@ -137,11 +138,13 @@ Si `ms-b` no encuentra `ms-a`, verifica que:
 
 ## 6. Archivos generados
 
-- `railway.json` (raíz): Configuración de deploy con `docker-compose` para un solo servicio.
-- `Dockerfile` (raíz): Usa `docker-compose up --build` para levantar todo el stack.
-- `docker-compose.yml`: Define todos los servicios (`ms-a`, `ms-b`, `ms_b`, `api-gateway`, `idgs15`, bases).
+- `Dockerfile` (raíz): Multi-stage build que compila todos los servicios y usa `supervisord` para correr cada JAR.
+- `supervisord.conf`: Configura 5 procesos (Eureka, Auth, ms-a, ms-b, Gateway).
+- `railway.json` (raíz): Healthcheck en `/` (gateway puerto 8080), timeout 120s.
 - Este archivo (`DEPLOY_RAILWAY.md`): Instrucciones de uso.
 
 ## 7. Nota importante para Railway gratis
 
-Como solo podés tener **un servicio** en Railway gratis, usamos `docker-compose` en un solo `Dockerfile` (raíz) para levantar todo el stack. Railway hará healthcheck en `/` (timeout 120s) esperando que el gateway (`api-gateway` en puerto 8080) esté listo.
+Como solo podés tener **un servicio** en Railway gratis, usamos `supervisord` en un solo `Dockerfile` (raíz) para correr todos los microservicios como procesos separados. Railway hará healthcheck en `/` (timeout 120s) esperando que el gateway (`api-gateway` en puerto 8080) esté listo.
+
+**Las bases de datos**: Usá la instancia PostgreSQL de Railway (un solo servicio `Database`) y creá las 3 bases (`dwint_msa`, `dwint_msb`, `dwint_auth`). En `SPRING_DATASOURCE_URL` de cada microservicio poné la URL interna de Railway (`postgresql://postgres:pass@postgres.railway.internal:5432/dwint_msa`).

@@ -1,0 +1,187 @@
+version: '3.9'
+
+services:
+  # Discovery Server (Eureka)
+  idgs15:
+    build:
+      context: ./idgs15
+    container_name: dwint_idgs15
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8761
+      - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
+      - EUREKA_CLIENT_FETCH_REGISTRY=false
+      - EUREKA_SERVER_ENABLE_SELF_PRESERVATION=false
+    ports:
+      - "8761:8761"
+    networks:
+      - dwint-net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Base de datos Auth
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: dwint_postgres_auth
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: dwint_auth
+    volumes:
+      - postgres-auth-data:/var/lib/postgresql/data
+      - ./authserver/src/main/resources/setup-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"  # Cambiar si hay conflicto local; usar -p 15432:5432 si es necesario
+    networks:
+      - dwint-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d dwint_auth"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Base de datos MS-A
+  postgres-msa:
+    image: postgres:16-alpine
+    container_name: dwint_postgres_msa
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: dwint_msa
+    volumes:
+      - postgres-msa-data:/var/lib/postgresql/data
+      - ./ms-a/src/main/resources/setup-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - dwint-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d dwint_msa"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Base de datos MS-B
+  postgres-msb:
+    image: postgres:16-alpine
+    container_name: dwint_postgres_msb
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: dwint_msb
+    volumes:
+      - postgres-msb-data:/var/lib/postgresql/data
+      - ./ms_b/src/main/resources/setup-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5434:5432"
+    networks:
+      - dwint-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d dwint_msb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Auth Server
+  authserver:
+    build:
+      context: ./authserver
+    container_name: dwint_authserver
+    depends_on:
+      idgs15:
+        condition: service_healthy
+      postgres-auth:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8083
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-auth:5432/dwint_auth
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://idgs15:8761/eureka/
+      - OAUTH2_ISSUER=http://authserver:8083
+    ports:
+      - "8083:8083"
+    networks:
+      - dwint-net
+
+  # Microservicio A
+  ms-a:
+    build:
+      context: ./ms-a
+    container_name: dwint_ms_a
+    depends_on:
+      idgs15:
+        condition: service_healthy
+      postgres-msa:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8081
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-msa:5432/dwint_msa
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - JWT_ISSUER_URI=http://authserver:8083
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://idgs15:8761/eureka/
+    ports:
+      - "8081:8081"
+    networks:
+      - dwint-net
+
+  # Microservicio B
+  ms-b:
+    build:
+      context: ./ms_b
+    container_name: dwint_ms_b
+    depends_on:
+      idgs15:
+        condition: service_healthy
+      postgres-msb:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8082
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-msb:5432/dwint_msb
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - JWT_ISSUER_URI=http://authserver:8083
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://idgs15:8761/eureka/
+    ports:
+      - "8082:8082"
+    networks:
+      - dwint-net
+
+  # Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: dwint_api_gateway
+    depends_on:
+      idgs15:
+        condition: service_healthy
+      authserver:
+        condition: service_started
+      ms-a:
+        condition: service_started
+      ms-b:
+        condition: service_started
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8080
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://idgs15:8761/eureka/
+    ports:
+      - "8080:8080"
+    networks:
+      - dwint-net
+
+volumes:
+  postgres-auth-data:
+  postgres-msa-data:
+  postgres-msb-data:
+
+networks:
+  dwint-net:
+    driver: bridge

@@ -91,10 +91,8 @@ services:
       context: ./authserver
     container_name: dwint_authserver
     depends_on:
-      idgs15:
-        condition: service_healthy
-      postgres-auth:
-        condition: service_healthy
+      - idgs15
+      - postgres-auth
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SERVER_PORT=8083
@@ -114,10 +112,8 @@ services:
       context: ./ms-a
     container_name: dwint_ms_a
     depends_on:
-      idgs15:
-        condition: service_healthy
-      postgres-msa:
-        condition: service_healthy
+      - idgs15
+      - postgres-msa
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SERVER_PORT=8081
@@ -137,10 +133,8 @@ services:
       context: ./ms_b
     container_name: dwint_ms_b
     depends_on:
-      idgs15:
-        condition: service_healthy
-      postgres-msb:
-        condition: service_healthy
+      - idgs15
+      - postgres-msb
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SERVER_PORT=8082
@@ -160,14 +154,10 @@ services:
       context: ./api-gateway
     container_name: dwint_api_gateway
     depends_on:
-      idgs15:
-        condition: service_healthy
-      authserver:
-        condition: service_started
-      ms-a:
-        condition: service_started
-      ms-b:
-        condition: service_started
+      - idgs15
+      - authserver
+      - ms-a
+      - ms-b
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SERVER_PORT=8080

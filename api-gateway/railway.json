@@ -1,0 +1,1 @@
+{"build":{"builder":"DOCKERFILE","dockerfilePath":"Dockerfile"},"deploy":{"startCommand":"java -jar /app/app.jar","healthcheckPath":"/","healthcheckTimeout":30,"restartPolicyType":"ON_FAILURE"}}

@@ -78,9 +78,11 @@ EUREKA_CLIENT_FETCH_REGISTRY=false
 
 1. Ve a [railway.app](https://railway.app/) y crea un nuevo proyecto (`New Project`).
 2. Selecciona `Deploy from GitHub repo` o `Empty Service`.
-3. Subí el repo completo (`DWINT/back`) a Railway (`Deploy from GitHub repo`).
-   - Railway detectará automáticamente `Dockerfile` en la raíz.
-   - No necesitas configurar `Root Directory`; todo se despliega con `docker-compose`.
+3. Para cada servicio (`ms-a`, `ms_b`, `api-gateway`, `authserver`, `idgs15`):
+   - Crea un servicio (`+ New Service`) en Railway.
+   - Elige `Deploy from GitHub repo` (selecciona tu repo `DWINT/back`).
+   - **Importante**: En `Root Directory`, pon la ruta del servicio (`ms-a`, `ms_b`, `ms_b`, `api-gateway`, `authserver`, `idgs15`).
+   - Railway detectará `railway.json` (o `Dockerfile`) en esa carpeta automáticamente.
 4. Base de datos (una sola instancia):
    - Crea un servicio `Database` (`PostgreSQL`).
    - Una vez creada, conectate con `psql` o con la interfaz de Railway y creá las 3 bases:

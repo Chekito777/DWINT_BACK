@@ -2,17 +2,15 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /workspace
 
-COPY .mvn .mvn
-COPY mvnw mvnw.cmd pom.xml ./
-RUN ./mvnw dependency:go-offline -pl ms-a,ms_b,api-gateway,authserver,idgs15 -am || true
+# Copiar todo el código fuente
+COPY . .
 
-COPY ms-a ms-a
-COPY ms_b ms_b
-COPY api-gateway api-gateway
-COPY authserver authserver
-COPY idgs15 idgs15
-
-RUN ./mvnw clean package -pl ms-a,ms_b,api-gateway,authserver,idgs15 -am -DskipTests -Dspring-boot.repackage.skip=false
+# Compilar cada módulo desde su directorio
+RUN cd ms-a && ./mvnw clean package -DskipTests -Dspring-boot.repackage.skip=false
+RUN cd ms_b && ./mvnw clean package -DskipTests -Dspring-boot.repackage.skip=false
+RUN cd api-gateway && ./mvnw clean package -DskipTests -Dspring-boot.repackage.skip=false
+RUN cd authserver && ./mvnw clean package -DskipTests -Dspring-boot.repackage.skip=false
+RUN cd idgs15 && ./mvnw clean package -DskipTests -Dspring-boot.repackage.skip=false
 
 # Runtime stage: supervisord + JARs
 FROM eclipse-temurin:21-jre-alpine

@@ -6,6 +6,7 @@ WORKDIR /workspace
 COPY . .
 
 # Compilar cada módulo desde su directorio
+RUN chmod +x ms-a/mvnw ms_b/mvnw api-gateway/mvnw authserver/mvnw idgs15/mvnw
 RUN cd ms-a && ./mvnw clean package -DskipTests -Dspring-boot.repackage.skip=false
 RUN cd ms_b && ./mvnw clean package -DskipTests -Dspring-boot.repackage.skip=false
 RUN cd api-gateway && ./mvnw clean package -DskipTests -Dspring-boot.repackage.skip=false

@@ -6,7 +6,8 @@
   },
   "deploy": {
     "startCommand": "",
-    "env": "PORT=8761",    "healthcheckPath": "/eureka/",
+    "env": "PORT=8761",
+    "healthcheckPath": "/eureka/",
     "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE"
   }

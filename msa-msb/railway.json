@@ -6,7 +6,7 @@
   },
   "deploy": {
     "startCommand": "",
-    "healthcheckTimeout": 120,
+    "env": "PORT=8081,8082",    "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE"
   }
 }

@@ -6,7 +6,7 @@
   },
   "deploy": {
     "startCommand": "",
-    "healthcheckPath": "/actuator/health",
+    "env": "PORT=8083",    "healthcheckPath": "/actuator/health",
     "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE"
   }
